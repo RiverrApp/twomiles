@@ -23,24 +23,11 @@ Rules:
 - columns: 6 or 7 short labels. Include exactly one date column, one money or quantity column, one column named Status with 3 or 4 possible values, and one person or owner column.
 - rows: 18 rows of realistic, varied sample data in the same order as columns. Dates as YYYY-MM-DD within the last three months. Money as $1,250. Use believable small business names and first names. Never use real people or real companies.
 - automations: exactly 3 short sentences, each one thing the real app would do automatically for this specific problem (alerts, reminders, handoffs, reports).
-- Plain words. No hyphens or dashes anywhere. No emoji.`;
+- Plain words. No hyphens or dashes anywhere. No emoji.
 
-const TOOL = {
-  name: 'render_app',
-  description: 'Render the prototype app for the visitor.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      valid: { type: 'boolean' },
-      appName: { type: 'string' },
-      tagline: { type: 'string' },
-      columns: { type: 'array', items: { type: 'string' } },
-      rows: { type: 'array', items: { type: 'array', items: { type: 'string' } } },
-      automations: { type: 'array', items: { type: 'string' } },
-    },
-    required: ['valid', 'appName', 'tagline', 'columns', 'rows', 'automations'],
-  },
-};
+Respond with ONLY a single JSON object, no prose before or after, no markdown fences. Shape:
+{"valid": true, "appName": "...", "tagline": "...", "columns": ["...", "..."], "rows": [["...", "..."], ...], "automations": ["...", "...", "..."]}
+Every row must have exactly as many values as columns, in the same order.`;
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
@@ -81,8 +68,6 @@ export default async (req, context) => {
         model: MODEL,
         max_tokens: 2500,
         system: SYSTEM,
-        tools: [TOOL],
-        tool_choice: { type: 'tool', name: 'render_app' },
         messages: [{ role: 'user', content: `Visitor description:\n<description>\n${prompt}\n</description>` }],
       }),
       signal: AbortSignal.timeout(25000),
@@ -97,7 +82,12 @@ export default async (req, context) => {
     return json(502, { error: 'That took too long. Try again in a minute.' });
   }
 
-  const out = ((data.content || []).find((b) => b.type === 'tool_use') || {}).input;
+  const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  let out = null;
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) out = JSON.parse(m[0]);
+  } catch {}
   if (!out || !Array.isArray(out.columns) || !Array.isArray(out.rows)) {
     console.error('Unexpected model output', JSON.stringify(data).slice(0, 500));
     return json(502, { error: 'Something went wrong on our end. Try again in a minute.' });
