@@ -1,11 +1,10 @@
-// Turns a one sentence business problem into a bespoke, self contained HTML prototype that
-// describe-it.html shows inside a sandboxed iframe. Needs ANTHROPIC_API_KEY in the Netlify
-// environment. Optional: CLAUDE_MODEL, PROTOTYPE_DAILY_CAP.
-//
-// Netlify stops a function that has not started responding after about 30 seconds, and writing a
-// whole page takes longer than that. So this streams: the response starts right away and the page
-// is forwarded to the browser as Claude writes it. The browser assembles it, and the function does
-// the safety checks on the finished page and ends the stream with a one line verdict.
+// Background function (the -background suffix makes Netlify run it for up to 15 minutes and
+// answer the caller with 202 straight away). It asks Claude for a bespoke, self contained HTML
+// prototype of the visitor's problem, checks the result, and saves it to Netlify Blobs under a
+// job id the browser chose. build-status.mjs is what the browser polls to pick it up.
+// Needs ANTHROPIC_API_KEY in the Netlify environment. Optional: CLAUDE_MODEL, PROTOTYPE_DAILY_CAP.
+
+import { getStore } from '@netlify/blobs';
 
 const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-5-5';
 const DAILY_CAP = Number(process.env.PROTOTYPE_DAILY_CAP) || 300;
@@ -34,15 +33,14 @@ Hard rules:
 - If the text is not a plausible business or operations problem (gibberish, a joke, a request for something else, anything abusive), output exactly: INVALID
 - Plain words in the interface. No hyphens or dashes in copy. No emoji.`;
 
-const json = (status, body) =>
-  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 const str = (v, max) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max);
+const isId = (v) => typeof v === 'string' && /^[a-f0-9]{24,48}$/.test(v);
 
-// Parses Anthropic's SSE stream, calling onText for each text delta. Returns the stop reason.
-async function pump(res, onText, max) {
+// Parses Anthropic's SSE stream into text. Returns { text, stop }.
+async function pump(res, max) {
   const reader = res.body.getReader();
   const dec = new TextDecoder();
-  let buf = '', total = 0, stop = null;
+  let buf = '', text = '', stop = null;
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -54,14 +52,13 @@ async function pump(res, onText, max) {
       let ev;
       try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
       if (ev.type === 'content_block_delta' && ev.delta && typeof ev.delta.text === 'string') {
-        total += ev.delta.text.length;
-        onText(ev.delta.text);
-        if (total > max) { reader.cancel().catch(() => {}); return 'too_long'; }
+        text += ev.delta.text;
+        if (text.length > max) { reader.cancel().catch(() => {}); return { text, stop: 'too_long' }; }
       } else if (ev.type === 'message_delta' && ev.delta && ev.delta.stop_reason) stop = ev.delta.stop_reason;
       else if (ev.type === 'error') throw new Error('stream error: ' + JSON.stringify(ev.error).slice(0, 200));
     }
   }
-  return stop;
+  return { text, stop };
 }
 
 // Pulls the HTML document out of the model text and rejects anything that could reach out of the sandbox.
@@ -81,72 +78,69 @@ function extractHtml(text) {
 }
 
 export default async (req, context) => {
-  if (req.method !== 'POST') return json(405, { error: 'Method not allowed.' });
+  if (req.method !== 'POST') return new Response('Method not allowed.', { status: 405 });
 
   // Only our own pages may call this.
   const origin = req.headers.get('origin');
   if (origin) {
     let ok = false;
     try { ok = new URL(origin).host === new URL(req.url).host; } catch {}
-    if (!ok) return json(403, { error: 'Not allowed.' });
+    if (!ok) return new Response('Not allowed.', { status: 403 });
   }
 
-  let prompt = '';
-  try { prompt = str((await req.json()).prompt, 500); } catch {}
-  if (prompt.length < 15) return json(400, { error: 'Give us a sentence or two about what is not working.' });
+  let body = {};
+  try { body = await req.json(); } catch {}
+  const prompt = str(body.prompt, 500), id = body.id;
+  if (!isId(id)) return new Response('Bad request.', { status: 400 });
+
+  const store = getStore('builds');
+  const put = (obj) => store.setJSON(id, { ...obj, at: Date.now() });
+
+  if (prompt.length < 15) return put({ status: 'error', error: 'Give us a sentence or two about what is not working.' });
 
   const now = Date.now();
   const today = new Date(now).toISOString().slice(0, 10);
   if (today !== day) { day = today; dayCount = 0; hits.clear(); }
   const ip = (context && context.ip) || req.headers.get('x-nf-client-connection-ip') || 'unknown';
   const mine = (hits.get(ip) || []).filter((t) => now - t < 3600000);
-  if (mine.length >= PER_IP_PER_HOUR || dayCount >= DAILY_CAP) return json(429, { error: 'Limit reached.' });
+  if (mine.length >= PER_IP_PER_HOUR || dayCount >= DAILY_CAP) return put({ status: 'limited' });
   mine.push(now); hits.set(ip, mine); dayCount++;
 
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return json(503, { error: 'This tool is not switched on yet. Check back soon.' });
+  if (!key) return put({ status: 'error', error: 'This tool is not switched on yet. Check back soon.' });
 
-  // Stream protocol: raw model text goes to the browser as it arrives, then one final line
-  // "\n\x1e" + JSON verdict. The browser only trusts the page if the verdict says ok.
-  const enc = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(ctrl) {
-      let text = '';
-      const send = (t) => { text += t; ctrl.enqueue(enc.encode(t)); };
-      const finish = (verdict) => { ctrl.enqueue(enc.encode('\n\x1e' + JSON.stringify(verdict))); ctrl.close(); };
-      try {
-        const r = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-          body: JSON.stringify({
-            model: MODEL,
-            max_tokens: 24000,
-            stream: true,
-            system: SYSTEM,
-            messages: [{ role: 'user', content: `Today's date is ${today}.\n\nVisitor description:\n<description>\n${prompt}\n</description>` }],
-          }),
-          signal: AbortSignal.timeout(240000),
-        });
-        if (!r.ok) {
-          console.error('Anthropic error', r.status, (await r.text()).slice(0, 500));
-          return finish({ ok: false, error: 'Something went wrong on our end. Try again in a minute.' });
-        }
-        const stop = await pump(r, send, MAX_HTML);
-        const out = extractHtml(text);
-        if (out.invalid) return finish({ ok: false, invalid: true });
-        if (!out.html) {
-          console.error('Rejected prototype:', out.error, 'stop:', stop, 'len:', text.length);
-          return finish({ ok: false, error: 'That one did not come out right. Try again, or say a little more about the problem.' });
-        }
-        const title = (out.html.match(/<title>([^<]{1,60})<\/title>/i) || [])[1];
-        finish({ ok: true, title: str(title, 60) || 'Your prototype', start: text.search(/<!doctype html>/i), end: text.lastIndexOf('</html>') + 7 });
-      } catch (e) {
-        console.error('Build failed', e && e.message);
-        try { finish({ ok: false, error: 'That took too long. Try again in a minute.' }); } catch {}
-      }
-    },
-  });
-  return new Response(stream, { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' } });
+  await put({ status: 'running' });
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 24000,
+        stream: true,
+        system: SYSTEM,
+        messages: [{ role: 'user', content: `Today's date is ${today}.\n\nVisitor description:\n<description>\n${prompt}\n</description>` }],
+      }),
+      signal: AbortSignal.timeout(300000),
+    });
+    if (!r.ok) {
+      console.error('Anthropic error', r.status, (await r.text()).slice(0, 500));
+      return put({ status: 'error', error: 'Something went wrong on our end. Try again in a minute.' });
+    }
+    const { text, stop } = await pump(r, MAX_HTML);
+    const out = extractHtml(text);
+    if (out.invalid) return put({ status: 'invalid' });
+    if (!out.html) {
+      console.error('Rejected prototype:', out.error, 'stop:', stop, 'len:', text.length);
+      return put({ status: 'error', error: 'That one did not come out right. Try again, or say a little more about the problem.' });
+    }
+    const title = (out.html.match(/<title>([^<]{1,60})<\/title>/i) || [])[1];
+    return put({ status: 'done', html: out.html, title: str(title, 60) || 'Your prototype' });
+  } catch (e) {
+    console.error('Build failed', e && e.message);
+    return put({ status: 'error', error: 'That took too long. Try again in a minute.' });
+  }
 };
 
 export const config = {
