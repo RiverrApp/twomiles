@@ -119,6 +119,28 @@
     $('pitchlink').href = mailto(model.name);
   }
 
+  /* Reads the streamed build: page text as it is written, then a final verdict line after a record separator. */
+  function build(text) {
+    return fetch('/api/build', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: text }) })
+      .then(function (r) {
+        if (r.status !== 200 || !r.body) return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d }; });
+        var reader = r.body.getReader(), dec = new TextDecoder(), all = '', n = 0;
+        function step() {
+          return reader.read().then(function (x) {
+            if (x.done) return all;
+            all += dec.decode(x.value, { stream: true });
+            var kb = Math.round(all.length / 1024);
+            if (kb !== n) { n = kb; $('hint').textContent = 'Writing the code, ' + kb + ' KB so far'; }
+            return step();
+          });
+        }
+        return step().then(function (all) {
+          var cut = all.lastIndexOf('\n\x1e'), verdict = null;
+          if (cut >= 0) { try { verdict = JSON.parse(all.slice(cut + 2)); } catch (e) {} }
+          return { status: 200, text: cut >= 0 ? all.slice(0, cut) : all, verdict: verdict };
+        });
+      });
+  }
   function post(url, text) {
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: text }) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d }; }); });
@@ -136,19 +158,18 @@
     if (text.length < 15) return fail('Give us a sentence or two about what is not working.');
     lastText = text;
     setBusy(true);
-    post('/api/build', text)
+    build(text)
       .then(function (res) {
-        var d = res.d || {};
         if (res.status === 429) return fail('That is the limit for now. Email brad@twomiles.co and we will sketch it with you.');
-        if (res.status === 200 && d.valid === false) return fail('Tell us about something in your business that is slow, manual or messy and we will sketch the fix.');
-        if (res.status === 200 && d.html) return showProto(d.html, d.title || 'Your prototype');
-        if (res.status === 503 || res.status === 400) return fail(d.error || 'Something went wrong. Try again in a minute.');
+        if (res.status === 200 && res.verdict && res.verdict.ok) return showProto(res.text.slice(res.verdict.start, res.verdict.end), res.verdict.title);
+        if (res.status === 200 && res.verdict && res.verdict.invalid) return fail('Tell us about something in your business that is slow, manual or messy and we will sketch the fix.');
+        if (res.status === 503 || res.status === 400) return fail((res.d && res.d.error) || 'Something went wrong. Try again in a minute.');
         // The bespoke build did not come out right; fall back to the template preview rather than show nothing.
         $('hint').textContent = 'Taking a simpler route';
         return post('/api/prototype', text).then(function (r2) {
           var d2 = r2.d || {};
           if (r2.status === 200 && Array.isArray(d2.columns) && d2.valid !== false) return showTemplate(d2);
-          fail(d.error || d2.error || 'That one did not come out right. Try again, or say a little more about the problem.');
+          fail((res.verdict && res.verdict.error) || d2.error || 'That one did not come out right. Try again, or say a little more about the problem.');
         });
       })
       .catch(function () { fail('We could not reach the server. Check your connection and try again.'); })
