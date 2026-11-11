@@ -2,7 +2,7 @@
 // that describe-it.html renders. Needs ANTHROPIC_API_KEY set in Netlify environment variables.
 // Optional: CLAUDE_MODEL to change the model, PROTOTYPE_DAILY_CAP to change the daily ceiling.
 
-const MODEL = process.env.CLAUDE_MODEL || 'claude-haiku-5-5';
+const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-5-5';
 const DAILY_CAP = Number(process.env.PROTOTYPE_DAILY_CAP) || 300;
 const PER_IP_PER_HOUR = 6;
 
