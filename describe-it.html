@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Describe it, see it · two miles</title>
+<meta name="description" content="Tell us what is broken in your business in a sentence and see a working prototype of the app that fixes it. Free, takes about ten seconds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="tools.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo" aria-label="two miles home">
+      <img class="logo-light" src="logo-blue.png" alt="two miles">
+      <img class="logo-dark" src="logo-cream.png" alt="two miles">
+    </a>
+    <div class="nav-links">
+      <a href="/#services">Services</a>
+      <a href="/#work">Work</a>
+      <a href="/#process">How we work</a>
+      <a href="/#team">Who we are</a>
+      <a href="/#tools">Free tools</a>
+    </div>
+    <a href="/#contact" class="nav-cta">
+      Start a project
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="tool-hero">
+    <span class="eyebrow"><span class="dot"></span>Free tool</span>
+    <h1>Tell us what's broken. <em>See the fix.</em></h1>
+    <p>Describe the thing in your business that runs on email, sticky notes or a spreadsheet nobody trusts. We'll sketch the app that replaces it while you wait.</p>
+
+    <form class="ask" id="ask">
+      <textarea id="prompt" maxlength="500" aria-label="Describe what is broken" placeholder="We track orders for 40 franchise stores in email and a shared spreadsheet, and things fall through the cracks."></textarea>
+      <div class="chips">Or start with one of these
+        <button type="button">We schedule 12 field crews on a whiteboard and by text message</button>
+        <button type="button">Customer quotes live in everyone's inbox and nobody knows what was promised</button>
+        <button type="button">We track equipment maintenance on paper checklists</button>
+      </div>
+      <div class="ask-row">
+        <button class="btn btn-primary" id="go" type="submit">Build my prototype</button>
+        <span class="hint" id="hint">Takes about ten seconds.</span>
+      </div>
+      <div class="err" id="err" hidden></div>
+    </form>
+  </section>
+
+  <section class="result" id="result" hidden></section>
+
+  <footer class="foot">
+    <div>© 2026 two miles LLC · Dover, Ohio</div>
+    <div><a href="/">Back to twomiles.co</a></div>
+  </footer>
+</main>
+
+<script src="tools.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var busy = false, timer = null;
+  var WAIT = ['Reading your problem', 'Deciding what to track', 'Laying out the screens', 'Filling in sample data', 'Almost there'];
+  TM.mount({
+    again: 'Try another idea',
+    pitchTitle: 'That took ten seconds. <em>Imagine three weeks.</em>',
+    pitchText: 'This is a sketch with made up data. The real version has your data, logins, alerts, and connects to the systems you already use. We figure out what to build with you, then we build it.',
+    mailto: 'mailto:brad@twomiles.co?subject=Build%20this%20for%20real',
+    onAgain: function () { $('prompt').focus(); }
+  });
+  function fail(msg) { $('err').textContent = msg; $('err').hidden = false; }
+  function setBusy(on) {
+    busy = on;
+    $('go').disabled = on;
+    $('go').textContent = on ? 'Building' : 'Build my prototype';
+    clearInterval(timer);
+    if (on) { var i = 0; $('hint').textContent = WAIT[0]; timer = setInterval(function () { i = Math.min(i + 1, WAIT.length - 1); $('hint').textContent = WAIT[i]; }, 2500); }
+    else $('hint').textContent = 'Takes about ten seconds.';
+  }
+  document.querySelector('.chips').addEventListener('click', function (e) {
+    if (e.target.tagName === 'BUTTON') { $('prompt').value = e.target.textContent; $('prompt').focus(); }
+  });
+  $('ask').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (busy) return;
+    var text = $('prompt').value.trim();
+    $('err').hidden = true;
+    if (text.length < 15) return fail('Give us a sentence or two about what is not working.');
+    setBusy(true);
+    fetch('/api/prototype', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: text }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d }; }); })
+      .then(function (res) {
+        var d = res.d;
+        if (res.status === 429) return fail('That is the limit for now. Email brad@twomiles.co and we will sketch it with you.');
+        if (res.status !== 200 || !d || !Array.isArray(d.columns)) return fail((d && d.error) || 'Something went wrong on our end. Try again in a minute.');
+        if (d.valid === false) return fail('Tell us about something in your business that is slow, manual or messy and we will sketch the fix.');
+        var model = TM.build(d.appName || 'Your App', [d.columns].concat(d.rows || []));
+        var autos = (d.automations || []).slice(0, 4);
+        var extra = autos.length ? '<div class="autos"><h4>What the real version would do on its own</h4><ul>' +
+          autos.map(function (a) { return '<li>' + TM.esc(a) + '</li>'; }).join('') + '</ul></div>' : '';
+        TM.show(model, '<b>' + TM.esc(model.name) + '.</b> ' + TM.esc(d.tagline || '') + ' Click around, it works.', extra);
+        document.getElementById('pitchlink').href = 'mailto:brad@twomiles.co?subject=' + encodeURIComponent('Build this for real: ' + model.name) +
+          '&body=' + encodeURIComponent('Here is what is in the way:\n\n' + text + '\n\n');
+      })
+      .catch(function () { fail('We could not reach the server. Check your connection and try again.'); })
+      .then(function () { setBusy(false); });
+  });
+})();
+</script>
+</body>
+</html>

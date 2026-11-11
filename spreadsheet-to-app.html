@@ -8,311 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=Figtree:wght@400;500;600;700;800&display=swap">
-<style>
-:root {
-  --blue: #0E5BDB;
-  --blue-dim: #0A47B0;
-  --cream: #F5EFE2;
-  --cream-2: #ECE3CF;
-  --cream-3: #DED3B9;
-  --ink: #0A1838;
-  --ink-2: #4A5273;
-
-  --bg: var(--cream);
-  --surface: #FFFFFF;
-  --surface-2: var(--cream-2);
-  --fg: var(--ink);
-  --fg-muted: var(--ink-2);
-  --fg-faint: rgba(10, 24, 56, 0.55);
-  --accent: var(--blue);
-  --accent-hover: var(--blue-dim);
-  --on-accent: #F5EFE2;
-  --rule: rgba(10, 24, 56, 0.12);
-  --rule-strong: rgba(10, 24, 56, 0.22);
-  --shadow: 0 1px 2px rgba(10,24,56,.06), 0 10px 28px rgba(10,24,56,.08);
-
-  --f-display: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
-  --f-body: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
-
-  --gutter: max(20px, env(safe-area-inset-left, 0px));
-  --gutter-r: max(20px, env(safe-area-inset-right, 0px));
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #0A1430;
-    --surface: #0F1C44;
-    --surface-2: #152856;
-    --fg: #F2EEE4;
-    --fg-muted: #B5BAD2;
-    --fg-faint: rgba(242, 238, 228, 0.6);
-    --accent: #4A89FF;
-    --accent-hover: #6AA0FF;
-    --on-accent: #0A1430;
-    --rule: rgba(242, 238, 228, 0.14);
-    --rule-strong: rgba(242, 238, 228, 0.3);
-    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.5);
-  }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #0A1430;
-  --surface: #0F1C44;
-  --surface-2: #152856;
-  --fg: #F2EEE4;
-  --fg-muted: #B5BAD2;
-  --fg-faint: rgba(242, 238, 228, 0.6);
-  --accent: #4A89FF;
-  --accent-hover: #6AA0FF;
-  --on-accent: #0A1430;
-  --rule: rgba(242, 238, 228, 0.14);
-  --rule-strong: rgba(242, 238, 228, 0.3);
-  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.5);
-}
-
-* { box-sizing: border-box; }
-body {
-  font-family: var(--f-body);
-  background: var(--bg);
-  color: var(--fg);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "ss01";
-}
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0 0 auto;
-  height: env(safe-area-inset-top, 0px);
-  z-index: 50;
-  background: var(--bg);
-}
-img { max-width: 100%; height: auto; display: block; }
-a { color: inherit; text-decoration: none; }
-
-/* Logo swap */
-.logo-light { display: inline-block; }
-.logo-dark { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .logo-light { display: none; }
-  :root:not([data-theme="light"]) .logo-dark { display: inline-block; }
-}
-:root[data-theme="dark"] .logo-light { display: none; }
-:root[data-theme="dark"] .logo-dark { display: inline-block; }
-
-/* ============ NAV ============ */
-.nav {
-  position: sticky;
-  top: env(safe-area-inset-top, 0px);
-  z-index: 40;
-  background: color-mix(in oklab, var(--bg) 92%, transparent);
-  backdrop-filter: saturate(140%) blur(10px);
-  -webkit-backdrop-filter: saturate(140%) blur(10px);
-  border-bottom: 1px solid var(--rule);
-}
-.nav-inner {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  padding: 14px var(--gutter-r) 14px var(--gutter);
-  max-width: 1360px;
-  margin: 0 auto;
-}
-.nav-logo img { height: 30px; width: auto; }
-.nav-links {
-  display: flex;
-  gap: 28px;
-  margin-left: auto;
-  font-weight: 500;
-  color: var(--fg-muted);
-  font-size: 15px;
-}
-.nav-links a:hover { color: var(--fg); }
-.nav-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background: var(--accent);
-  color: var(--on-accent);
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 14.5px;
-  transition: background .15s ease;
-}
-.nav-cta:hover { background: var(--accent-hover); }
-.nav-cta svg { width: 14px; height: 14px; }
-.nav-cta { white-space: nowrap; }
-@media (max-width: 820px) {
-  .nav-links { display: none; }
-}
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--f-display);
-  font-style: italic;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--accent);
-  font-size: 15.5px;
-}
-.eyebrow .dot {
-  width: 6px; height: 6px; border-radius: 999px; background: var(--accent);
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 22px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 15.5px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: transform .12s ease, background .15s ease, border-color .15s ease;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn-primary { background: var(--accent); color: var(--on-accent); }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-ghost { background: transparent; color: var(--fg); border-color: var(--rule-strong); }
-.btn-ghost:hover { border-color: var(--fg); }
-.btn svg { width: 15px; height: 15px; }
-
-/* ============ TOOL PAGE ============ */
-body { margin: 0; }
-.wrap { max-width: 1360px; margin: 0 auto; padding: 0 var(--gutter-r) 0 var(--gutter); }
-.tool-hero { padding: 64px 0 28px; }
-.tool-hero h1 {
-  font-family: var(--f-display);
-  font-variation-settings: "opsz" 144;
-  font-weight: 500;
-  font-size: clamp(38px, 6vw, 84px);
-  line-height: 0.98;
-  letter-spacing: -0.02em;
-  margin: 18px 0 20px;
-  text-wrap: balance;
-}
-.tool-hero h1 em { font-style: italic; font-weight: 700; color: var(--accent); }
-.tool-hero p { font-size: clamp(17px, 1.5vw, 20px); color: var(--fg-muted); max-width: 60ch; margin: 0; }
-
-.drop {
-  margin: 28px 0 0;
-  border: 2px dashed var(--rule-strong);
-  border-radius: 24px;
-  background: var(--surface);
-  padding: 44px 24px;
-  text-align: center;
-  transition: border-color .15s ease, background .15s ease;
-}
-.drop.over { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--surface)); }
-.drop h2 { font-family: var(--f-display); font-weight: 600; font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
-.drop p { max-width: none; margin: 0 0 22px; color: var(--fg-muted); font-size: 15.5px; }
-.drop-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.drop .private { margin: 22px 0 0; font-size: 13.5px; color: var(--fg-faint); display: inline-flex; gap: 8px; align-items: center; }
-.drop .private svg { width: 14px; height: 14px; }
-.drop .err { color: #C0392B; font-weight: 600; margin: 16px 0 0; font-size: 14.5px; }
-button { font-family: inherit; }
-
-/* ---- generated app ---- */
-.result { padding: 8px 0 72px; }
-.result-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 0 0 16px; }
-.result-bar .note { color: var(--fg-muted); font-size: 15px; }
-.result-bar .note b { color: var(--fg); }
-.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: 14.5px; cursor: pointer; }
-.linkbtn:hover { text-decoration: underline; }
-
-.frame { border: 1px solid var(--rule-strong); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); background: var(--surface); }
-.chrome { display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: #0A1838; }
-.chrome .dots { display: flex; gap: 6px; }
-.chrome .dots i { width: 11px; height: 11px; border-radius: 99px; display: block; }
-.chrome .dots i:nth-child(1) { background: #FF5F57; }
-.chrome .dots i:nth-child(2) { background: #FEBC2E; }
-.chrome .dots i:nth-child(3) { background: #28C840; }
-.chrome .url { flex: 1; min-width: 0; background: rgba(255,255,255,.1); color: #D8DDF0; border-radius: 8px; padding: 5px 12px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 560px; }
-.side { background: var(--surface-2); border-right: 1px solid var(--rule); padding: 20px 14px; }
-.side .appname { font-family: var(--f-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; padding: 0 8px 16px; overflow-wrap: anywhere; }
-.side button {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  background: none; border: 0; color: var(--fg-muted);
-  padding: 10px 10px; border-radius: 10px; font-size: 14.5px; font-weight: 600; cursor: pointer; text-align: left;
-}
-.side button svg { width: 16px; height: 16px; flex: none; }
-.side button:hover { color: var(--fg); }
-.side button.on { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(10,24,56,.08); }
-.main { padding: 24px; min-width: 0; }
-.main h3 { font-family: var(--f-display); font-weight: 600; font-size: 24px; letter-spacing: -0.01em; margin: 0 0 18px; }
-
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.kpi { border: 1px solid var(--rule); border-radius: 14px; padding: 16px; background: var(--surface); min-width: 0; }
-.kpi .l { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.kpi .v { font-family: var(--f-display); font-weight: 600; font-size: 30px; letter-spacing: -0.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
-.kpi .s { font-size: 13px; color: var(--fg-muted); margin-top: 2px; }
-
-.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-.card { border: 1px solid var(--rule); border-radius: 14px; padding: 18px; background: var(--surface); min-width: 0; }
-.card h4 { margin: 0 0 14px; font-size: 14.5px; font-weight: 700; }
-.hbar { display: grid; grid-template-columns: minmax(70px, 34%) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13.5px; padding: 5px 0; }
-.hbar .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-muted); }
-.hbar .t { height: 10px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
-.hbar .t i { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
-.hbar .c { font-weight: 700; font-variant-numeric: tabular-nums; }
-.cols { display: flex; align-items: flex-end; gap: 6px; height: 170px; }
-.cols .col { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; height: 100%; }
-.cols .col i { display: block; width: 100%; max-width: 44px; border-radius: 6px 6px 0 0; background: var(--accent); min-height: 2px; }
-.cols .col span { font-size: 11px; color: var(--fg-faint); white-space: nowrap; }
-
-.tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-.tools input, .tools select, .form input, .form select {
-  font: inherit; font-size: 14.5px; color: var(--fg);
-  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 10px; padding: 9px 12px; min-width: 0;
-}
-.tools input { flex: 1 1 200px; }
-.tools select { max-width: 190px; }
-.tools .count { margin-left: auto; font-size: 13.5px; color: var(--fg-muted); white-space: nowrap; }
-.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 14px; }
-table { border-collapse: collapse; width: 100%; font-size: 14px; }
-th, td { padding: 10px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--rule); max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
-th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-faint); background: var(--surface-2); cursor: pointer; user-select: none; position: sticky; top: 0; }
-th:hover { color: var(--fg); }
-td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-tr:last-child td { border-bottom: 0; }
-tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surface)); }
-.pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 700;
-  background: color-mix(in oklab, var(--pc) 16%, var(--surface)); color: color-mix(in oklab, var(--pc) 62%, var(--fg)); }
-.pager { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 12px; font-size: 13.5px; color: var(--fg-muted); }
-.pager button { background: var(--surface); border: 1px solid var(--rule-strong); color: var(--fg); border-radius: 8px; padding: 6px 12px; font-weight: 600; cursor: pointer; }
-.pager button:disabled { opacity: .4; cursor: default; }
-
-.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; max-width: 760px; }
-.form label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; color: var(--fg-muted); }
-.form .actions { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; margin-top: 4px; }
-.toast { font-size: 14px; font-weight: 600; color: #1E8E4E; }
-.empty { color: var(--fg-muted); font-size: 15px; padding: 24px 0; }
-
-.pitch { margin-top: 28px; border-radius: 24px; background: var(--accent); color: var(--on-accent); padding: 36px 28px; display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-.pitch h2 { font-family: var(--f-display); font-weight: 500; font-size: clamp(26px, 3.4vw, 42px); line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 8px; }
-.pitch h2 em { font-weight: 700; }
-.pitch p { margin: 0; max-width: 56ch; opacity: .88; font-size: 16px; }
-.pitch .btn { background: var(--on-accent); color: var(--accent); white-space: nowrap; }
-
-.foot { border-top: 1px solid var(--rule); padding: 24px 0 36px; color: var(--fg-muted); font-size: 14px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.foot a:hover { color: var(--fg); }
-[hidden] { display: none !important; }
-
-@media (max-width: 760px) {
-  .app { grid-template-columns: 1fr; }
-  .side { border-right: 0; border-bottom: 1px solid var(--rule); padding: 12px; display: flex; gap: 6px; overflow-x: auto; align-items: center; }
-  .side .appname { display: none; }
-  .side button { width: auto; white-space: nowrap; }
-  .main { padding: 16px; }
-  .tools .count { margin-left: 0; width: 100%; }
-  .tool-hero { padding-top: 40px; }
-}
-</style>
+<link rel="stylesheet" href="tools.css">
 </head>
 <body>
 
@@ -327,6 +23,7 @@ tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surf
       <a href="/#work">Work</a>
       <a href="/#process">How we work</a>
       <a href="/#team">Who we are</a>
+      <a href="/#tools">Free tools</a>
     </div>
     <a href="/#contact" class="nav-cta">
       Start a project
@@ -357,46 +54,7 @@ tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surf
     </div>
   </section>
 
-  <section class="result" id="result" hidden>
-    <div class="result-bar">
-      <div class="note" id="note"></div>
-      <button class="linkbtn" id="again" type="button">Try another file</button>
-    </div>
-    <div class="frame">
-      <div class="chrome">
-        <div class="dots"><i></i><i></i><i></i></div>
-        <div class="url" id="url"></div>
-      </div>
-      <div class="app">
-        <aside class="side">
-          <div class="appname" id="appname"></div>
-          <button type="button" data-tab="dashboard" class="on">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-            Dashboard
-          </button>
-          <button type="button" data-tab="records">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-            Records
-          </button>
-          <button type="button" data-tab="add">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            Add new
-          </button>
-        </aside>
-        <div class="main" id="main"></div>
-      </div>
-    </div>
-
-    <div class="pitch">
-      <div>
-        <h2>That took three seconds. <em>Imagine three weeks.</em></h2>
-        <p>The real version has logins, roles, alerts, and connects to the systems you already use. We figure out what to build with you, then we build it.</p>
-      </div>
-      <a class="btn" href="mailto:brad@twomiles.co?subject=Turn%20my%20spreadsheet%20into%20an%20app">Build the real thing
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-      </a>
-    </div>
-  </section>
+  <section class="result" id="result" hidden></section>
 
   <footer class="foot">
     <div>© 2026 two miles LLC · Dover, Ohio</div>
@@ -405,234 +63,22 @@ tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surf
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="tools.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var MAX_ROWS = 5000, PAGE = 25;
-  var PILL = ['#0E5BDB', '#1E8E4E', '#C77700', '#C0392B', '#7B3FD1', '#0C8A8A', '#B8327A', '#5B6B8C'];
-  var S = null;
-
-  function esc(v) {
-    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-  function toNum(v) {
-    if (typeof v === 'number') return isFinite(v) ? v : null;
-    if (typeof v !== 'string') return null;
-    var s = v.replace(/[$,%\s]/g, '');
-    if (/^\((.*)\)$/.test(s)) s = '-' + s.slice(1, -1);
-    return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : null;
-  }
-  function toDate(v) {
-    if (v instanceof Date) return isNaN(v) ? null : v;
-    if (typeof v !== 'string') return null;
-    var s = v.trim();
-    if (!/^(\d{1,4}[\/\-.]\d{1,2}[\/\-.]\d{1,4}|[A-Za-z]{3,9}\.? \d{1,2},? \d{4}|\d{1,2} [A-Za-z]{3,9} \d{4})/.test(s)) return null;
-    var t = Date.parse(s);
-    return isNaN(t) ? null : new Date(t);
-  }
-  function fmtNum(n, money) {
-    var o = { maximumFractionDigits: Math.abs(n) >= 1000 || Number.isInteger(n) ? (money && !Number.isInteger(n) ? 2 : 0) : 2 };
-    if (money) { o.style = 'currency'; o.currency = 'USD'; if (Number.isInteger(n) || Math.abs(n) >= 1000) { o.minimumFractionDigits = 0; o.maximumFractionDigits = 0; } }
-    return n.toLocaleString('en-US', o);
-  }
-  function fmtDate(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
-  function titleCase(s) {
-    return s.replace(/\.[^.]+$/, '').replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim()
-      .replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }) || 'Your App';
-  }
-
-  /* ---------- turn raw rows into a typed model ---------- */
-  function build(name, grid) {
-    grid = grid.filter(function (r) { return r.some(function (c) { return c !== '' && c != null; }); });
-    var h = 0;
-    while (h < grid.length - 1 && grid[h].filter(function (c) { return c !== '' && c != null; }).length < 2) h++;
-    if (grid.length - h < 2) throw new Error('That file needs a header row and at least one row of data.');
-    var width = Math.max.apply(null, grid.slice(h, h + 50).map(function (r) { return r.length; }));
-    var body = grid.slice(h + 1, h + 1 + MAX_ROWS);
-    var cols = [], seen = {};
-    for (var i = 0; i < width; i++) {
-      var vals = body.map(function (r) { return r[i]; }).filter(function (v) { return v !== '' && v != null; });
-      if (!vals.length) continue;
-      var label = String(grid[h][i] == null || grid[h][i] === '' ? 'Column ' + (i + 1) : grid[h][i]).trim();
-      if (grid[h][i] instanceof Date) label = fmtDate(grid[h][i]);
-      while (seen[label]) label += ' 2';
-      seen[label] = 1;
-      var nums = 0, dates = 0, money = false;
-      vals.forEach(function (v) {
-        if (toDate(v)) dates++;
-        else if (toNum(v) !== null) { nums++; if (typeof v === 'string' && v.indexOf('$') > -1) money = true; }
-      });
-      var type = 'text';
-      if (dates / vals.length >= 0.8) type = 'date';
-      else if (nums / vals.length >= 0.85) {
-        type = /#|\b(id|no|num|number|zip|postal|phone|sku|year|code)\b/i.test(label) ? 'text' : 'number';
-        if (/price|cost|total|amount|revenue|sales|paid|balance|fee|budget|invoice|payment|\$/i.test(label)) money = true;
-      }
-      var uniq = [];
-      if (type === 'text') {
-        var u = {};
-        vals.forEach(function (v) { u[String(v).trim()] = (u[String(v).trim()] || 0) + 1; });
-        uniq = Object.keys(u);
-        if (uniq.length >= 2 && uniq.length <= 12 && uniq.length <= Math.max(2, vals.length * 0.6)) {
-          type = 'category';
-          uniq.sort(function (a, b) { return u[b] - u[a]; });
-        }
-      }
-      cols.push({ i: i, label: label, type: type, money: money, options: type === 'category' ? uniq : [] });
-    }
-    if (!cols.length) throw new Error('We could not find any data in that file.');
-    var rows = body.map(function (r) {
-      return cols.map(function (c) {
-        var v = r[c.i];
-        if (v === '' || v == null) return null;
-        if (c.type === 'number') return toNum(v);
-        if (c.type === 'date') return toDate(v);
-        return v instanceof Date ? fmtDate(v) : String(v).trim();
-      });
-    });
-    return { name: titleCase(name), cols: cols, rows: rows, total: grid.length - h - 1, tab: 'dashboard', q: '', filters: {}, sort: null, page: 0, toast: '' };
-  }
-
-  /* ---------- views ---------- */
-  function cell(c, v) {
-    if (v == null) return '<td' + (c.type === 'number' ? ' class="num"' : '') + '></td>';
-    if (c.type === 'number') return '<td class="num">' + esc(fmtNum(v, c.money)) + '</td>';
-    if (c.type === 'date') return '<td>' + esc(fmtDate(v)) + '</td>';
-    if (c.type === 'category') {
-      var k = c.options.indexOf(v);
-      return '<td><span class="pill" style="--pc:' + PILL[(k < 0 ? 7 : k) % PILL.length] + '">' + esc(v) + '</span></td>';
-    }
-    return '<td title="' + esc(v) + '">' + esc(v) + '</td>';
-  }
-  function hbars(title, pairs, money) {
-    var max = Math.max.apply(null, pairs.map(function (p) { return p[1]; }).concat([1]));
-    return '<div class="card"><h4>' + esc(title) + '</h4>' + pairs.map(function (p) {
-      return '<div class="hbar"><span class="n" title="' + esc(p[0]) + '">' + esc(p[0]) + '</span><span class="t"><i style="width:' +
-        Math.max(2, p[1] / max * 100).toFixed(1) + '%"></i></span><span class="c">' + esc(fmtNum(p[1], money)) + '</span></div>';
-    }).join('') + '</div>';
-  }
-  function dashboard() {
-    var ci = function (t) { return S.cols.map(function (c, k) { return c.type === t ? k : -1; }).filter(function (k) { return k >= 0; }); };
-    var nums = ci('number'), cats = ci('category'), dates = ci('date');
-    var html = '<h3>Dashboard</h3><div class="kpis"><div class="kpi"><div class="l">Total records</div><div class="v">' +
-      fmtNum(S.rows.length) + '</div><div class="s">' + S.cols.length + ' fields</div></div>';
-    nums.slice(0, 3).forEach(function (k) {
-      var c = S.cols[k], vs = S.rows.map(function (r) { return r[k]; }).filter(function (v) { return v != null; });
-      var sum = vs.reduce(function (a, b) { return a + b; }, 0);
-      html += '<div class="kpi"><div class="l" title="' + esc(c.label) + '">' + (/^total/i.test(c.label) ? '' : 'Total ') + esc(c.label) + '</div><div class="v">' +
-        esc(fmtNum(sum, c.money)) + '</div><div class="s">Average ' + esc(fmtNum(vs.length ? sum / vs.length : 0, c.money)) + '</div></div>';
-    });
-    html += '</div><div class="charts">';
-    var charts = 0;
-    cats.slice(0, 2).forEach(function (k, n) {
-      var c = S.cols[k], m = {}, nk = n === 1 || !nums.length ? -1 : nums[0];
-      S.rows.forEach(function (r) { if (r[k] != null) m[r[k]] = (m[r[k]] || 0) + (nk < 0 ? 1 : (r[nk] || 0)); });
-      var pairs = Object.keys(m).map(function (x) { return [x, m[x]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 8);
-      html += hbars(nk < 0 ? 'Records by ' + c.label : S.cols[nk].label + ' by ' + c.label, pairs, nk >= 0 && S.cols[nk].money);
-      charts++;
-    });
-    if (dates.length) {
-      var dk = dates[0], mm = {};
-      S.rows.forEach(function (r) {
-        if (!r[dk]) return;
-        var key = r[dk].getFullYear() * 12 + r[dk].getMonth();
-        mm[key] = (mm[key] || 0) + 1;
-      });
-      var keys = Object.keys(mm).map(Number).sort(function (a, b) { return a - b; }).slice(-12);
-      if (keys.length > 1) {
-        var mx = Math.max.apply(null, keys.map(function (x) { return mm[x]; }));
-        html += '<div class="card"><h4>Records per month, by ' + esc(S.cols[dk].label) + '</h4><div class="cols">' + keys.map(function (x) {
-          var d = new Date(Math.floor(x / 12), x % 12, 1);
-          return '<div class="col" title="' + mm[x] + ' records"><i style="height:' + (mm[x] / mx * 100).toFixed(1) + '%"></i><span>' +
-            d.toLocaleDateString('en-US', { month: 'short' }) + '</span></div>';
-        }).join('') + '</div></div>';
-        charts++;
-      }
-    }
-    html += '</div>';
-    if (!charts) html += '<p class="empty">Open Records to search and sort everything in this sheet.</p>';
-    return html;
-  }
-  function visible() {
-    var q = S.q.toLowerCase();
-    var rows = S.rows.filter(function (r) {
-      for (var k in S.filters) if (S.filters[k] && r[k] !== S.filters[k]) return false;
-      if (!q) return true;
-      return r.some(function (v, k) {
-        if (v == null) return false;
-        var s = S.cols[k].type === 'date' ? fmtDate(v) : String(v);
-        return s.toLowerCase().indexOf(q) > -1;
-      });
-    });
-    if (S.sort) {
-      var k = S.sort.k, d = S.sort.d;
-      rows = rows.slice().sort(function (a, b) {
-        var x = a[k], y = b[k];
-        if (x == null) return 1; if (y == null) return -1;
-        if (x instanceof Date) { x = +x; y = +y; }
-        return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true })) * d;
-      });
-    }
-    return rows;
-  }
-  function records() {
-    var rows = visible(), pages = Math.max(1, Math.ceil(rows.length / PAGE));
-    if (S.page >= pages) S.page = pages - 1;
-    var html = '<h3>Records</h3><div class="tools"><input id="q" type="search" placeholder="Search everything" value="' + esc(S.q) + '">';
-    S.cols.forEach(function (c, k) {
-      if (c.type !== 'category') return;
-      if (Object.keys(S.filters).length >= 3 && !(k in S.filters)) return;
-      if (!(k in S.filters)) S.filters[k] = '';
-      html += '<select data-f="' + k + '" aria-label="Filter by ' + esc(c.label) + '"><option value="">All ' + esc(c.label) + '</option>' +
-        c.options.map(function (o) { return '<option' + (S.filters[k] === o ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
-    });
-    html += '<span class="count">' + fmtNum(rows.length) + ' of ' + fmtNum(S.rows.length) + '</span></div><div class="tablewrap"><table><thead><tr>';
-    S.cols.forEach(function (c, k) {
-      var arrow = S.sort && S.sort.k === k ? (S.sort.d > 0 ? ' ↑' : ' ↓') : '';
-      html += '<th data-s="' + k + '"' + (c.type === 'number' ? ' class="num"' : '') + '>' + esc(c.label) + arrow + '</th>';
-    });
-    html += '</tr></thead><tbody>';
-    rows.slice(S.page * PAGE, S.page * PAGE + PAGE).forEach(function (r) {
-      html += '<tr>' + S.cols.map(function (c, k) { return cell(c, r[k]); }).join('') + '</tr>';
-    });
-    html += '</tbody></table></div>';
-    if (!rows.length) html += '<p class="empty">Nothing matches that search.</p>';
-    html += '<div class="pager"><span>Page ' + (S.page + 1) + ' of ' + pages + '</span><button type="button" data-p="-1"' + (S.page ? '' : ' disabled') +
-      '>Previous</button><button type="button" data-p="1"' + (S.page < pages - 1 ? '' : ' disabled') + '>Next</button></div>';
-    return html;
-  }
-  function addForm() {
-    var html = '<h3>Add new</h3><form class="form" id="form">';
-    S.cols.forEach(function (c, k) {
-      html += '<label>' + esc(c.label);
-      if (c.type === 'category') html += '<select name="f' + k + '">' + c.options.map(function (o) { return '<option>' + esc(o) + '</option>'; }).join('') + '</select>';
-      else html += '<input name="f' + k + '" type="' + (c.type === 'number' ? 'number" step="any' : c.type === 'date' ? 'date' : 'text') + '">';
-      html += '</label>';
-    });
-    html += '<div class="actions"><button class="btn btn-primary" type="submit">Save record</button><span class="toast">' + esc(S.toast) + '</span></div></form>';
-    return html;
-  }
-  function render(keepFocus) {
-    document.querySelectorAll('.side button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === S.tab); });
-    $('main').innerHTML = S.tab === 'dashboard' ? dashboard() : S.tab === 'records' ? records() : addForm();
-    if (keepFocus) { var q = $('q'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
-  }
-  function show(model, note) {
-    S = model;
-    $('appname').textContent = S.name;
-    $('url').textContent = 'app.yourbusiness.com/' + S.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    $('note').innerHTML = note + ' <b>' + fmtNum(S.rows.length) + ' records</b> and <b>' + S.cols.length + ' fields</b> turned into a working app.' +
-      (S.total > S.rows.length ? ' Showing the first ' + fmtNum(MAX_ROWS) + ' rows.' : '');
-    $('result').hidden = false;
-    $('err').hidden = true;
-    render();
-    $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  TM.mount({
+    again: 'Try another file',
+    pitchTitle: 'That took three seconds. <em>Imagine three weeks.</em>',
+    pitchText: 'The real version has logins, roles, alerts, and connects to the systems you already use. We figure out what to build with you, then we build it.',
+    mailto: 'mailto:brad@twomiles.co?subject=Turn%20my%20spreadsheet%20into%20an%20app'
+  });
   function fail(msg) { $('err').textContent = msg; $('err').hidden = false; }
-
-  /* ---------- input ---------- */
+  function done(m, lead) {
+    $('err').hidden = true;
+    TM.show(m, lead + ' <b>' + TM.fmtNum(m.rows.length) + ' records</b> and <b>' + m.cols.length + ' fields</b> turned into a working app.' +
+      (m.total > m.rows.length ? ' Showing the first ' + TM.fmtNum(TM.MAX_ROWS) + ' rows.' : ''));
+  }
   function load(file) {
     if (!file) return;
     if (file.size > 25 * 1024 * 1024) return fail('That file is over 25 MB. Try a smaller export.');
@@ -641,7 +87,7 @@ tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surf
       try {
         var wb = XLSX.read(new Uint8Array(fr.result), { type: 'array', cellDates: true });
         var grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: true });
-        show(build(file.name, grid), 'Done.');
+        done(TM.build(file.name, grid), 'Done.');
       } catch (e) { fail(e && /header row|any data/.test(e.message) ? e.message : 'We could not read that file. Try an Excel or CSV export.'); }
     };
     fr.onerror = function () { fail('We could not read that file.'); };
@@ -658,52 +104,18 @@ tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surf
       var q = 12 + Math.floor(rnd() * 20) * 6;
       grid.push([1042 + i, new Date(2026, Math.floor(Math.pow(rnd(), 0.6) * 10), 1 + Math.floor(rnd() * 27)), pick(loc), pick(cust), pick(prod), q, Math.round(q * (9 + rnd() * 14)), pick(st)]);
     }
-    show(build('Franchise Orders', grid), 'Sample loaded.');
+    done(TM.build('Franchise Orders', grid), 'Sample loaded.');
   }
 
   var drop = $('drop');
   $('pick').onclick = function () { $('file').click(); };
   $('file').onchange = function (e) { load(e.target.files[0]); e.target.value = ''; };
   $('sample').onclick = sample;
-  $('again').onclick = function () { $('result').hidden = true; window.scrollTo({ top: 0, behavior: 'smooth' }); };
   ['dragenter', 'dragover'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
   ['dragleave', 'drop'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
   drop.addEventListener('drop', function (e) { load(e.dataTransfer.files[0]); });
   window.addEventListener('dragover', function (e) { e.preventDefault(); });
   window.addEventListener('drop', function (e) { e.preventDefault(); });
-
-  document.querySelector('.side').addEventListener('click', function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    S.tab = b.dataset.tab; S.toast = ''; render();
-  });
-  $('main').addEventListener('input', function (e) {
-    if (e.target.id === 'q') { S.q = e.target.value; S.page = 0; render(true); }
-  });
-  $('main').addEventListener('change', function (e) {
-    if (e.target.dataset.f != null) { S.filters[e.target.dataset.f] = e.target.value; S.page = 0; render(); }
-  });
-  $('main').addEventListener('click', function (e) {
-    var th = e.target.closest('th'), p = e.target.closest('[data-p]');
-    if (th) { var k = +th.dataset.s; S.sort = S.sort && S.sort.k === k ? (S.sort.d > 0 ? { k: k, d: -1 } : null) : { k: k, d: 1 }; render(); }
-    if (p) { S.page += +p.dataset.p; render(); }
-  });
-  $('main').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var f = new FormData(e.target), any = false;
-    var row = S.cols.map(function (c, k) {
-      var v = (f.get('f' + k) || '').trim();
-      if (!v) return null;
-      if (c.type !== 'category') any = true;
-      if (c.type === 'number') return toNum(v);
-      if (c.type === 'date') { var p = v.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
-      return v;
-    });
-    if (!any) { S.toast = 'Fill in at least one field.'; return render(); }
-    S.rows.unshift(row);
-    S.tab = 'records'; S.q = ''; S.sort = null; S.page = 0;
-    Object.keys(S.filters).forEach(function (k) { S.filters[k] = ''; });
-    render();
-  });
 })();
 </script>
 </body>

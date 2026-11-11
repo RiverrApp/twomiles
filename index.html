@@ -1105,9 +1105,9 @@ a:focus-visible, button:focus-visible {
 
 /* ============ FREE TOOL ============ */
 .tool-band { padding: 0 var(--gutter-r) 96px var(--gutter); }
+.tool-grid { max-width: 1360px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .tool-card {
-  max-width: 1360px; margin: 0 auto;
-  display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap;
+  display: flex; flex-direction: column; align-items: flex-start;
   background: var(--surface); border: 1px solid var(--rule); border-radius: 24px; box-shadow: var(--shadow);
   padding: 36px;
 }
@@ -1116,7 +1116,9 @@ a:focus-visible, button:focus-visible {
   font-size: clamp(28px, 3.6vw, 46px); margin: 12px 0 10px;
 }
 .tool-card h3 em { font-style: italic; font-weight: 700; color: var(--accent); }
-.tool-card p { margin: 0; color: var(--fg-muted); max-width: 58ch; font-size: 17px; }
+.tool-card p { margin: 0 0 28px; color: var(--fg-muted); max-width: 58ch; font-size: 17px; }
+.tool-card .btn { margin-top: auto; }
+@media (max-width: 900px) { .tool-grid { grid-template-columns: 1fr; } }
 @media (max-width: 540px) { .tool-card { padding: 24px; } }
 </style>
 </head>
@@ -1135,7 +1137,7 @@ a:focus-visible, button:focus-visible {
       <a href="#work">Work</a>
       <a href="#process">How we work</a>
       <a href="#team">Who we are</a>
-      <a href="spreadsheet-to-app.html">Free tool</a>
+      <a href="#tools">Free tools</a>
     </div>
     <a href="#contact" class="nav-cta">
       Start a project
@@ -1448,15 +1450,23 @@ a:focus-visible, button:focus-visible {
 <!-- =============================================================== -->
 
 <section class="tool-band" id="tools">
-  <div class="tool-card">
-    <div>
+  <div class="tool-grid">
+    <div class="tool-card">
+      <span class="eyebrow"><span class="dot"></span>Free tool</span>
+      <h3>Tell us what's broken. <em>See the fix.</em></h3>
+      <p>Describe the thing in your business that runs on email or sticky notes. We'll sketch a working prototype of the app that replaces it in about ten seconds.</p>
+      <a href="describe-it.html" class="btn btn-primary">Build my prototype
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+    <div class="tool-card">
       <span class="eyebrow"><span class="dot"></span>Free tool</span>
       <h3>Your spreadsheet, <em>as an app.</em></h3>
-      <p>Drop in the spreadsheet you run your business on and see it as a working tool with a dashboard, search and filters. It takes about three seconds and your file never leaves your browser.</p>
+      <p>Drop in the spreadsheet you run your business on and see it as a working tool with a dashboard, search and filters. Your file never leaves your browser.</p>
+      <a href="spreadsheet-to-app.html" class="btn btn-ghost">Try it with your file
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
     </div>
-    <a href="spreadsheet-to-app.html" class="btn btn-primary">Try it free
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-    </a>
   </div>
 </section>
 
