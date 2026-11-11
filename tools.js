@@ -38,7 +38,8 @@ window.TM = (function () {
   }
 
   /* ---------- turn raw rows into a typed model ---------- */
-  function build(name, grid) {
+  function build(name, grid, opts) {
+    opts = opts || {};
     grid = grid.filter(function (r) { return r.some(function (c) { return c !== '' && c != null; }); });
     var h = 0;
     while (h < grid.length - 1 && grid[h].filter(function (c) { return c !== '' && c != null; }).length < 2) h++;
@@ -86,7 +87,13 @@ window.TM = (function () {
         return v instanceof Date ? fmtDate(v) : String(v).trim();
       });
     });
-    return { name: titleCase(name), cols: cols, rows: rows, total: grid.length - h - 1, tab: 'dashboard', q: '', filters: {}, sort: null, page: 0, toast: '' };
+    var appType = opts.appType === 'log' ? 'log' : 'board';
+    return {
+      name: titleCase(name), cols: cols, rows: rows, total: grid.length - h - 1,
+      appType: appType, entryTitle: opts.entryTitle || (appType === 'log' ? 'Log an entry' : 'Add new'),
+      tab: appType === 'log' ? 'entry' : 'dashboard',
+      q: '', filters: {}, sort: null, page: 0, toast: '', entry: {}, logged: []
+    };
   }
 
   /* ---------- views ---------- */
@@ -208,30 +215,135 @@ window.TM = (function () {
     html += '<div class="actions"><button class="btn btn-primary" type="submit">Save record</button><span class="toast">' + esc(S.toast) + '</span></div></form>';
     return html;
   }
+  /* ---- log apps: fast entry screen ---- */
+  function isIdCol(c) { return c.type === 'text' && /(^|\b)(id|no|number)(\b|$)|#/i.test(c.label); }
+  function entryCols() { return S.cols.map(function (c, k) { return k; }).filter(function (k) { return !isIdCol(S.cols[k]); }); }
+  function mainNumK() { for (var k = 0; k < S.cols.length; k++) if (S.cols[k].type === 'number') return k; return -1; }
+  function distinctVals(k) {
+    var u = {}, order = [];
+    S.rows.forEach(function (r) { var v = r[k]; if (v == null || v === '') return; var s = S.cols[k].type === 'number' ? v : String(v); if (!(s in u)) { u[s] = 0; order.push(s); } u[s]++; });
+    return order.sort(function (a, b) { return u[b] - u[a]; });
+  }
+  function numPresets(k) {
+    var vs = distinctVals(k).map(Number).filter(function (n) { return isFinite(n); });
+    if (vs.length > 6) vs = vs.slice(0, 6);
+    return vs.sort(function (a, b) { return a - b; });
+  }
+  function today0() { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+  function quickEntry() {
+    var ek = mainNumK();
+    if (S.entry.__init !== true) {
+      S.entry = { __init: true };
+      S.cols.forEach(function (c, k) { if (c.type === 'date') S.entry[k] = today0(); });
+    }
+    var html = '<div class="entryhead"><h3>' + esc(S.entryTitle) + '</h3><span class="entrysub">A few taps between sessions. No forms, no spreadsheet.</span></div>';
+    html += '<form class="entry" id="entry"><div class="fields">';
+    entryCols().forEach(function (k) {
+      var c = S.cols[k], cur = S.entry[k];
+      html += '<div class="field"><div class="flabel">' + esc(c.label) + '</div>';
+      if (c.type === 'category' || (c.type === 'text' && distinctVals(k).length <= 10 && distinctVals(k).length >= 2)) {
+        var opts = c.type === 'category' ? c.options : distinctVals(k);
+        html += '<div class="chipset">' + opts.map(function (o) {
+          return '<button type="button" class="chip' + (cur === o ? ' on' : '') + '" data-ek="' + k + '" data-ev="' + esc(o) + '">' + esc(o) + '</button>';
+        }).join('') + '</div>';
+      } else if (c.type === 'number') {
+        var pre = numPresets(k);
+        html += '<div class="chipset">' + pre.map(function (n) {
+          return '<button type="button" class="chip' + (Number(cur) === n ? ' on' : '') + '" data-ek="' + k + '" data-ev="' + n + '" data-num="1">' + esc(fmtNum(n, c.money)) + '</button>';
+        }).join('') + '<input class="einput enum" data-ei="' + k + '" data-supp="1" type="number" step="any" inputmode="decimal" placeholder="Other" value="' + (cur != null && pre.indexOf(Number(cur)) < 0 ? esc(cur) : '') + '"></div>';
+      } else if (c.type === 'date') {
+        var t = today0(), y = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 1), cd = cur instanceof Date ? cur : t;
+        var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+        html += '<div class="chipset"><button type="button" class="chip' + (+cd === +t ? ' on' : '') + '" data-ek="' + k + '" data-ev="' + iso(t) + '" data-date="1">Today</button>' +
+          '<button type="button" class="chip' + (+cd === +y ? ' on' : '') + '" data-ek="' + k + '" data-ev="' + iso(y) + '" data-date="1">Yesterday</button>' +
+          '<input class="einput" data-ei="' + k + '" data-date="1" type="date" value="' + iso(cd) + '"></div>';
+      } else {
+        var dl = distinctVals(k).slice(0, 12);
+        html += '<input class="einput wide" data-ei="' + k + '" type="text" placeholder="Type here" value="' + (cur != null ? esc(cur) : '') + '"' + (dl.length ? ' list="dl' + k + '"' : '') + '>' +
+          (dl.length ? '<datalist id="dl' + k + '">' + dl.map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>' : '');
+      }
+      html += '</div>';
+    });
+    html += '</div><div class="entryactions"><button class="btn btn-primary big" type="submit">' + esc(S.entryTitle) +
+      '</button><span class="toast">' + esc(S.toast) + '</span></div></form>';
+
+    html += '<div class="today"><div class="today-head">';
+    if (ek >= 0) {
+      var tot = S.logged.reduce(function (a, r) { return a + (typeof r[ek] === 'number' ? r[ek] : 0); }, 0);
+      html += '<span class="today-tot">' + esc(fmtNum(tot, S.cols[ek].money)) + '</span> ' + esc(S.cols[ek].label).toLowerCase() + ' logged today';
+    } else html += '<span class="today-tot">' + S.logged.length + '</span> logged today';
+    html += S.logged.length ? ' · ' + S.logged.length + (S.logged.length === 1 ? ' entry' : ' entries') : '';
+    html += '</div>';
+    if (!S.logged.length) html += '<p class="today-empty">Nothing logged yet. Make an entry above and it shows up here.</p>';
+    else html += '<ul class="today-list">' + S.logged.map(function (r) {
+      var parts = entryCols().filter(function (k) { return S.cols[k].type !== 'date' && r[k] != null && r[k] !== ''; })
+        .map(function (k) { var c = S.cols[k]; return '<span>' + esc(c.type === 'number' ? fmtNum(r[k], c.money) : r[k]) + '</span>'; });
+      return '<li>' + parts.join('<i>·</i>') + '</li>';
+    }).join('') + '</ul>';
+    html += '</div>';
+    return html;
+  }
+
   function render(keepFocus) {
     document.querySelectorAll('.side button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === S.tab); });
-    $('main').innerHTML = S.tab === 'dashboard' ? dashboard() : S.tab === 'records' ? records() : addForm();
+    $('main').innerHTML = S.tab === 'dashboard' ? dashboard() : S.tab === 'records' ? records() : S.tab === 'entry' ? quickEntry() : addForm();
     if (keepFocus) { var q = $('q'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
   }
   var ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>';
   function ico(d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; }
+
+  var IC = {
+    dash: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+    rows: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'
+  };
+  function btn(tab, label, path) { return '<button type="button" data-tab="' + tab + '">' + ico(path) + label + '</button>'; }
+  function sidebar() {
+    if (S.appType === 'log') return btn('entry', esc(S.entryTitle), IC.bolt) + btn('dashboard', 'Dashboard', IC.dash) + btn('records', 'Records', IC.rows);
+    return btn('dashboard', 'Dashboard', IC.dash) + btn('records', 'Records', IC.rows) + btn('add', 'Add new', IC.plus);
+  }
+
+  function readInputs() {
+    document.querySelectorAll('#main .einput').forEach(function (el) {
+      var k = +el.dataset.ei, v = el.value.trim();
+      if (!v) { if (!el.dataset.supp) delete S.entry[k]; return; }
+      if (el.dataset.date) { var p = v.split('-'); S.entry[k] = new Date(+p[0], +p[1] - 1, +p[2]); }
+      else if (S.cols[k].type === 'number') S.entry[k] = toNum(v);
+      else S.entry[k] = v;
+    });
+  }
+  function saveEntry() {
+    readInputs();
+    var filled = S.cols.map(function (c, k) { return k; }).filter(function (k) { return S.entry[k] != null && S.entry[k] !== '' && S.cols[k].type !== 'date'; });
+    var ek = mainNumK();
+    if (!filled.length || (ek >= 0 && (S.entry[ek] == null || S.entry[ek] === ''))) { S.toast = ek >= 0 ? 'Add ' + S.cols[ek].label.toLowerCase() + ' and at least one detail.' : 'Fill in at least one field.'; return render(); }
+    var row = S.cols.map(function (c, k) {
+      if (S.entry[k] != null && S.entry[k] !== '') return c.type === 'number' ? toNum(S.entry[k]) : S.entry[k];
+      if (isIdCol(c)) { var last = S.rows.length ? String(S.rows[0][k] || '') : '', m = last.match(/^(\D*)(\d+)$/); if (m) return m[1] + (String(+m[2] + 1)); }
+      if (c.type === 'date') return today0();
+      return null;
+    });
+    S.rows.unshift(row); S.logged.unshift(row);
+    var keepDate = {}; S.cols.forEach(function (c, k) { if (c.type === 'date') keepDate[k] = today0(); });
+    S.entry = keepDate; S.entry.__init = true; S.toast = '';
+    render();
+  }
 
   /* Builds the app frame inside #result and wires it up. Text in opts is trusted page copy. */
   function mount(opts) {
     $('result').innerHTML =
       '<div class="result-bar"><div class="note" id="note"></div><button class="linkbtn" id="again" type="button">' + opts.again + '</button></div>' +
       '<div class="frame"><div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url" id="url"></div></div>' +
-      '<div class="app"><aside class="side"><div class="appname" id="appname"></div>' +
-      '<button type="button" data-tab="dashboard" class="on">' + ico('<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>') + 'Dashboard</button>' +
-      '<button type="button" data-tab="records">' + ico('<path d="M3 6h18M3 12h18M3 18h18"/>') + 'Records</button>' +
-      '<button type="button" data-tab="add">' + ico('<path d="M12 5v14M5 12h14"/>') + 'Add new</button>' +
-      '</aside><div class="main" id="main"></div></div></div><div id="extra"></div>' +
+      '<div class="app"><aside class="side" id="side"><div class="appname" id="appname"></div></aside><div class="main" id="main"></div></div></div><div id="extra"></div>' +
       '<div class="pitch"><div><h2>' + opts.pitchTitle + '</h2><p>' + opts.pitchText + '</p></div>' +
       '<a class="btn" id="pitchlink" href="' + opts.mailto + '">Build the real thing' + ARROW + '</a></div>';
 
     $('again').onclick = function () { $('result').hidden = true; window.scrollTo({ top: 0, behavior: 'smooth' }); if (opts.onAgain) opts.onAgain(); };
-    document.querySelector('.side').addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
+    $('side').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-tab]'); if (!b) return;
+      if (S.tab === 'entry' && b.dataset.tab !== 'entry') readInputs();
       S.tab = b.dataset.tab; S.toast = ''; render();
     });
     $('main').addEventListener('input', function (e) {
@@ -241,12 +353,20 @@ window.TM = (function () {
       if (e.target.dataset.f != null) { S.filters[e.target.dataset.f] = e.target.value; S.page = 0; render(); }
     });
     $('main').addEventListener('click', function (e) {
-      var th = e.target.closest('th'), p = e.target.closest('[data-p]');
-      if (th) { var k = +th.dataset.s; S.sort = S.sort && S.sort.k === k ? (S.sort.d > 0 ? { k: k, d: -1 } : null) : { k: k, d: 1 }; render(); }
+      var chip = e.target.closest('.chip'), th = e.target.closest('th'), p = e.target.closest('[data-p]');
+      if (chip) {
+        readInputs();
+        var k = +chip.dataset.ek, v = chip.dataset.date ? (function () { var d = chip.dataset.ev.split('-'); return new Date(+d[0], +d[1] - 1, +d[2]); })() : chip.dataset.num ? toNum(chip.dataset.ev) : chip.dataset.ev;
+        S.entry[k] = (!chip.dataset.date && String(S.entry[k]) === String(v)) ? undefined : v;
+        if (S.entry[k] === undefined) delete S.entry[k];
+        S.toast = ''; render();
+      }
+      if (th) { var sk = +th.dataset.s; S.sort = S.sort && S.sort.k === sk ? (S.sort.d > 0 ? { k: sk, d: -1 } : null) : { k: sk, d: 1 }; render(); }
       if (p) { S.page += +p.dataset.p; render(); }
     });
     $('main').addEventListener('submit', function (e) {
       e.preventDefault();
+      if (e.target.id === 'entry') return saveEntry();
       var f = new FormData(e.target), any = false;
       var row = S.cols.map(function (c, k) {
         var v = (f.get('f' + k) || '').trim();
@@ -267,6 +387,7 @@ window.TM = (function () {
   /* noteHtml and extraHtml must already be escaped by the caller. */
   function show(model, noteHtml, extraHtml) {
     S = model;
+    $('side').innerHTML = '<div class="appname" id="appname"></div>' + sidebar();
     $('appname').textContent = S.name;
     $('url').textContent = 'app.yourbusiness.com/' + S.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     $('note').innerHTML = noteHtml;

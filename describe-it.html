@@ -100,7 +100,7 @@
         if (res.status === 429) return fail('That is the limit for now. Email brad@twomiles.co and we will sketch it with you.');
         if (res.status !== 200 || !d || !Array.isArray(d.columns)) return fail((d && d.error) || 'Something went wrong on our end. Try again in a minute.');
         if (d.valid === false) return fail('Tell us about something in your business that is slow, manual or messy and we will sketch the fix.');
-        var model = TM.build(d.appName || 'Your App', [d.columns].concat(d.rows || []));
+        var model = TM.build(d.appName || 'Your App', [d.columns].concat(d.rows || []), { appType: d.appType, entryTitle: d.entryTitle });
         var autos = (d.automations || []).slice(0, 4);
         var extra = autos.length ? '<div class="autos"><h4>What the real version would do on its own</h4><ul>' +
           autos.map(function (a) { return '<li>' + TM.esc(a) + '</li>'; }).join('') + '</ul></div>' : '';

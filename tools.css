@@ -319,3 +319,34 @@ tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surf
 .autos ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
 .autos li { display: flex; gap: 12px; align-items: flex-start; color: var(--fg-muted); font-size: 15.5px; }
 .autos li::before { content: ""; flex: none; width: 8px; height: 8px; margin-top: 8px; border-radius: 99px; background: var(--accent); }
+
+/* ---- log app: fast entry screen ---- */
+.entryhead { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.entryhead h3 { margin: 0; }
+.entrysub { color: var(--fg-muted); font-size: 14.5px; }
+.entry .fields { display: grid; gap: 18px; }
+.field .flabel { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-faint); margin-bottom: 9px; }
+.chipset { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  background: var(--surface); color: var(--fg-muted);
+  border: 1.5px solid var(--rule-strong); border-radius: 12px; padding: 10px 16px;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+.chip:hover { color: var(--fg); border-color: var(--fg-muted); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.einput { font: inherit; font-size: 15px; color: var(--fg); background: var(--surface); border: 1.5px solid var(--rule-strong); border-radius: 12px; padding: 10px 14px; }
+.einput:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.einput.enum { width: 110px; }
+.einput.wide { width: 100%; max-width: 420px; }
+.entryactions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 22px; }
+.btn.big { font-size: 16.5px; padding: 15px 30px; }
+
+.today { margin-top: 26px; border-top: 1px solid var(--rule); padding-top: 20px; }
+.today-head { font-size: 15.5px; color: var(--fg-muted); margin-bottom: 14px; }
+.today-tot { font-family: var(--f-display); font-weight: 600; font-size: 22px; color: var(--fg); letter-spacing: -0.01em; }
+.today-empty { color: var(--fg-faint); font-size: 14.5px; margin: 0; }
+.today-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.today-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 11px 15px; font-size: 14.5px; }
+.today-list li span { font-weight: 600; }
+.today-list li i { color: var(--fg-faint); font-style: normal; }
