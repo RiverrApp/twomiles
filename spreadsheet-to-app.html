@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spreadsheet to app · two miles</title>
+<meta name="description" content="Upload the spreadsheet you run your business on and see it as a working app in seconds. Free, and your file never leaves your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="tools.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo" aria-label="two miles home">
+      <img class="logo-light" src="logo-blue.png" alt="two miles">
+      <img class="logo-dark" src="logo-cream.png" alt="two miles">
+    </a>
+    <div class="nav-links">
+      <a href="/#services">Services</a>
+      <a href="/#work">Work</a>
+      <a href="/#process">How we work</a>
+      <a href="/#team">Who we are</a>
+      <a href="/#tools">Free tools</a>
+    </div>
+    <a href="/#contact" class="nav-cta">
+      Start a project
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="tool-hero">
+    <span class="eyebrow"><span class="dot"></span>Free tool</span>
+    <h1>The spreadsheet you run on, <em>as an app.</em></h1>
+    <p>Every business has that one spreadsheet. Drop yours in and see it as a real tool with a dashboard, search, filters and a form for new entries. It takes about three seconds.</p>
+
+    <div class="drop" id="drop">
+      <h2>Drop your spreadsheet here</h2>
+      <p>Excel or CSV. The first sheet is used.</p>
+      <div class="drop-ctas">
+        <button class="btn btn-primary" id="pick" type="button">Choose a file</button>
+        <button class="btn btn-ghost" id="sample" type="button">Try a sample instead</button>
+      </div>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv,.tsv,.ods" hidden>
+      <div class="private">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Your file never leaves your browser. Nothing is uploaded or stored.
+      </div>
+      <div class="err" id="err" hidden></div>
+    </div>
+  </section>
+
+  <section class="result" id="result" hidden></section>
+
+  <footer class="foot">
+    <div>© 2026 two miles LLC · Dover, Ohio</div>
+    <div><a href="/">Back to twomiles.co</a></div>
+  </footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="tools.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  TM.mount({
+    again: 'Try another file',
+    pitchTitle: 'That took three seconds. <em>Imagine three weeks.</em>',
+    pitchText: 'The real version has logins, roles, alerts, and connects to the systems you already use. We figure out what to build with you, then we build it.',
+    mailto: 'mailto:brad@twomiles.co?subject=Turn%20my%20spreadsheet%20into%20an%20app'
+  });
+  function fail(msg) { $('err').textContent = msg; $('err').hidden = false; }
+  function done(m, lead) {
+    $('err').hidden = true;
+    TM.show(m, lead + ' <b>' + TM.fmtNum(m.rows.length) + ' records</b> and <b>' + m.cols.length + ' fields</b> turned into a working app.' +
+      (m.total > m.rows.length ? ' Showing the first ' + TM.fmtNum(TM.MAX_ROWS) + ' rows.' : ''));
+  }
+  function load(file) {
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) return fail('That file is over 25 MB. Try a smaller export.');
+    var fr = new FileReader();
+    fr.onload = function () {
+      try {
+        var wb = XLSX.read(new Uint8Array(fr.result), { type: 'array', cellDates: true });
+        var grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: true });
+        done(TM.build(file.name, grid), 'Done.');
+      } catch (e) { fail(e && /header row|any data/.test(e.message) ? e.message : 'We could not read that file. Try an Excel or CSV export.'); }
+    };
+    fr.onerror = function () { fail('We could not read that file.'); };
+    fr.readAsArrayBuffer(file);
+  }
+  function sample() {
+    var seed = 7, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    var pick = function (a) { return a[Math.floor(rnd() * a.length)]; };
+    var loc = ['Dover', 'Canton', 'Akron', 'Columbus', 'Cleveland'], st = ['Shipped', 'Shipped', 'In production', 'New', 'On hold'];
+    var prod = ['Team tees', 'Hoodies', 'Hats', 'Banners', 'Stickers', 'Polos'];
+    var cust = ['Miller Hardware', 'Tusc Youth Soccer', 'Crater Coffee', 'Dover Dental', 'Buckeye Brewing', 'Riverside Church', 'Holmes Lumber', 'Zoar Bakery', 'Canal Fitness', 'Sugarcreek Schools'];
+    var grid = [['Order #', 'Order date', 'Location', 'Customer', 'Product', 'Qty', 'Total', 'Status']];
+    for (var i = 0; i < 84; i++) {
+      var q = 12 + Math.floor(rnd() * 20) * 6;
+      grid.push([1042 + i, new Date(2026, Math.floor(Math.pow(rnd(), 0.6) * 10), 1 + Math.floor(rnd() * 27)), pick(loc), pick(cust), pick(prod), q, Math.round(q * (9 + rnd() * 14)), pick(st)]);
+    }
+    done(TM.build('Franchise Orders', grid), 'Sample loaded.');
+  }
+
+  var drop = $('drop');
+  $('pick').onclick = function () { $('file').click(); };
+  $('file').onchange = function (e) { load(e.target.files[0]); e.target.value = ''; };
+  $('sample').onclick = sample;
+  ['dragenter', 'dragover'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) { load(e.dataTransfer.files[0]); });
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); });
+})();
+</script>
+</body>
+</html>
