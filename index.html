@@ -814,7 +814,7 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
 }
 .member-ava {
-  width: 180px;
+  width: 140px;
   aspect-ratio: 1;
   border-radius: 999px;
   background: var(--accent);
@@ -846,9 +846,9 @@ a { color: inherit; text-decoration: none; }
 }
 .member-ava img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
   object-fit: cover;
   z-index: 3;
 }
@@ -887,7 +887,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 1020px) { .team { grid-template-columns: 1fr; } }
 @media (max-width: 540px) {
   .member { grid-template-columns: 1fr; padding: 24px; }
-  .member-ava { width: 120px; }
+  .member-ava { width: 100px; }
   .member-ava .initials { font-size: 52px; }
 }
 
