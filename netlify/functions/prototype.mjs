@@ -21,7 +21,7 @@ Rules:
 - appName: 2 to 3 words, Title Case, no punctuation.
 - tagline: one plain sentence, under 18 words, on what this replaces for them.
 - columns: 6 or 7 short labels. Include exactly one date column, one money or quantity column, one column named Status with 3 or 4 possible values, and one person or owner column.
-- rows: 18 rows of realistic, varied sample data in the same order as columns. Dates as YYYY-MM-DD within the last three months. Money as $1,250. Use believable small business names and first names. Never use real people or real companies.
+- rows: 18 rows of realistic, varied sample data in the same order as columns. Dates as YYYY-MM-DD, spread across the most recent three months up to TODAY (today's date is given in the user message). Money as $1,250. Use believable small business names and first names. Never use real people or real companies.
 - automations: exactly 3 short sentences, each one thing the real app would do automatically for this specific problem (alerts, reminders, handoffs, reports).
 - Plain words. No hyphens or dashes anywhere. No emoji.
 
@@ -68,7 +68,7 @@ export default async (req, context) => {
         model: MODEL,
         max_tokens: 2500,
         system: SYSTEM,
-        messages: [{ role: 'user', content: `Visitor description:\n<description>\n${prompt}\n</description>` }],
+        messages: [{ role: 'user', content: `Today's date is ${new Date().toISOString().slice(0, 10)}.\n\nVisitor description:\n<description>\n${prompt}\n</description>` }],
       }),
       signal: AbortSignal.timeout(25000),
     });
