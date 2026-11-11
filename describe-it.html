@@ -36,7 +36,7 @@
   <section class="tool-hero">
     <span class="eyebrow"><span class="dot"></span>Free tool</span>
     <h1>Tell us what's broken. <em>See the fix.</em></h1>
-    <p>Describe the thing in your business that runs on email, sticky notes or a spreadsheet nobody trusts. We'll sketch the app that replaces it while you wait.</p>
+    <p>Describe the thing in your business that runs on email, sticky notes or a spreadsheet nobody trusts. We'll design and build a working sketch of the app that replaces it while you wait.</p>
 
     <form class="ask" id="ask">
       <textarea id="prompt" maxlength="500" aria-label="Describe what is broken" placeholder="We track orders for 40 franchise stores in email and a shared spreadsheet, and things fall through the cracks."></textarea>
@@ -47,7 +47,7 @@
       </div>
       <div class="ask-row">
         <button class="btn btn-primary" id="go" type="submit">Build my prototype</button>
-        <span class="hint" id="hint">Takes about ten seconds.</span>
+        <span class="hint" id="hint">Takes about thirty seconds.</span>
       </div>
       <div class="err" id="err" hidden></div>
     </form>
@@ -65,48 +65,91 @@
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var busy = false, timer = null;
-  var WAIT = ['Reading your problem', 'Deciding what to track', 'Laying out the screens', 'Filling in sample data', 'Almost there'];
+  var busy = false, timer = null, lastText = '';
+  var WAIT = ['Reading your problem', 'Deciding what the main screen is', 'Designing the layout', 'Writing the code', 'Filling in sample data', 'Testing the buttons', 'Almost there'];
+  var MAIL = 'mailto:brad@twomiles.co?subject=';
+  var ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>';
+
   TM.mount({
     again: 'Try another idea',
-    pitchTitle: 'That took ten seconds. <em>Imagine three weeks.</em>',
+    pitchTitle: 'That took thirty seconds. <em>Imagine three weeks.</em>',
     pitchText: 'This is a sketch with made up data. The real version has your data, logins, alerts, and connects to the systems you already use. We figure out what to build with you, then we build it.',
-    mailto: 'mailto:brad@twomiles.co?subject=Build%20this%20for%20real',
+    mailto: MAIL + 'Build%20this%20for%20real',
     onAgain: function () { $('prompt').focus(); }
   });
+
   function fail(msg) { $('err').textContent = msg; $('err').hidden = false; }
   function setBusy(on) {
     busy = on;
     $('go').disabled = on;
     $('go').textContent = on ? 'Building' : 'Build my prototype';
     clearInterval(timer);
-    if (on) { var i = 0; $('hint').textContent = WAIT[0]; timer = setInterval(function () { i = Math.min(i + 1, WAIT.length - 1); $('hint').textContent = WAIT[i]; }, 2500); }
-    else $('hint').textContent = 'Takes about ten seconds.';
+    if (on) { var i = 0; $('hint').textContent = WAIT[0]; timer = setInterval(function () { i = Math.min(i + 1, WAIT.length - 1); $('hint').textContent = WAIT[i]; }, 5000); }
+    else $('hint').textContent = 'Takes about thirty seconds.';
   }
+  function mailto(name) {
+    return MAIL + encodeURIComponent('Build this for real: ' + name) + '&body=' + encodeURIComponent('Here is what is in the way:\n\n' + lastText + '\n\n');
+  }
+
+  /* Shows a generated page inside a sandboxed frame: no scripts can reach this page, your cookies, or the network. */
+  function showProto(html, title) {
+    var r = $('result');
+    r.innerHTML =
+      '<div class="result-bar"><div class="note"><b>' + TM.esc(title) + '.</b> Built just now for what you described. Click around, it works.</div>' +
+      '<button class="linkbtn" id="again" type="button">Try another idea</button></div>' +
+      '<div class="frame"><div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">app.yourbusiness.com/' +
+      TM.esc(title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')) + '</div></div>' +
+      '<iframe class="proto" id="proto" title="Your prototype" sandbox="allow-scripts" referrerpolicy="no-referrer" csp="default-src \'none\'; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; img-src data:; font-src data:"></iframe></div>' +
+      '<div class="pitch"><div><h2>That took thirty seconds. <em>Imagine three weeks.</em></h2>' +
+      '<p>This is a sketch with made up data. The real version has your data, logins, alerts, and connects to the systems you already use. We figure out what to build with you, then we build it.</p></div>' +
+      '<a class="btn" href="' + mailto(title) + '">Build the real thing' + ARROW + '</a></div>';
+    $('proto').srcdoc = html;
+    $('again').onclick = function () { r.hidden = true; r.innerHTML = ''; TM.mount({ again: 'Try another idea', pitchTitle: '', pitchText: '', mailto: MAIL }); window.scrollTo({ top: 0, behavior: 'smooth' }); $('prompt').focus(); };
+    r.hidden = false;
+    r.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* Fallback: the older template based preview, used if the bespoke build does not come out right. */
+  function showTemplate(d) {
+    var model = TM.build(d.appName || 'Your App', [d.columns].concat(d.rows || []), { appType: d.appType, entryTitle: d.entryTitle });
+    var autos = (d.automations || []).slice(0, 4);
+    var extra = autos.length ? '<div class="autos"><h4>What the real version would do on its own</h4><ul>' +
+      autos.map(function (a) { return '<li>' + TM.esc(a) + '</li>'; }).join('') + '</ul></div>' : '';
+    TM.show(model, '<b>' + TM.esc(model.name) + '.</b> ' + TM.esc(d.tagline || '') + ' Click around, it works.', extra);
+    $('pitchlink').href = mailto(model.name);
+  }
+
+  function post(url, text) {
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: text }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d }; }); });
+  }
+
   document.querySelector('.chips').addEventListener('click', function (e) {
     if (e.target.tagName === 'BUTTON') { $('prompt').value = e.target.textContent; $('prompt').focus(); }
   });
+
   $('ask').addEventListener('submit', function (e) {
     e.preventDefault();
     if (busy) return;
     var text = $('prompt').value.trim();
     $('err').hidden = true;
     if (text.length < 15) return fail('Give us a sentence or two about what is not working.');
+    lastText = text;
     setBusy(true);
-    fetch('/api/prototype', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: text }) })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d }; }); })
+    post('/api/build', text)
       .then(function (res) {
-        var d = res.d;
+        var d = res.d || {};
         if (res.status === 429) return fail('That is the limit for now. Email brad@twomiles.co and we will sketch it with you.');
-        if (res.status !== 200 || !d || !Array.isArray(d.columns)) return fail((d && d.error) || 'Something went wrong on our end. Try again in a minute.');
-        if (d.valid === false) return fail('Tell us about something in your business that is slow, manual or messy and we will sketch the fix.');
-        var model = TM.build(d.appName || 'Your App', [d.columns].concat(d.rows || []), { appType: d.appType, entryTitle: d.entryTitle });
-        var autos = (d.automations || []).slice(0, 4);
-        var extra = autos.length ? '<div class="autos"><h4>What the real version would do on its own</h4><ul>' +
-          autos.map(function (a) { return '<li>' + TM.esc(a) + '</li>'; }).join('') + '</ul></div>' : '';
-        TM.show(model, '<b>' + TM.esc(model.name) + '.</b> ' + TM.esc(d.tagline || '') + ' Click around, it works.', extra);
-        document.getElementById('pitchlink').href = 'mailto:brad@twomiles.co?subject=' + encodeURIComponent('Build this for real: ' + model.name) +
-          '&body=' + encodeURIComponent('Here is what is in the way:\n\n' + text + '\n\n');
+        if (res.status === 200 && d.valid === false) return fail('Tell us about something in your business that is slow, manual or messy and we will sketch the fix.');
+        if (res.status === 200 && d.html) return showProto(d.html, d.title || 'Your prototype');
+        if (res.status === 503 || res.status === 400) return fail(d.error || 'Something went wrong. Try again in a minute.');
+        // The bespoke build did not come out right; fall back to the template preview rather than show nothing.
+        $('hint').textContent = 'Taking a simpler route';
+        return post('/api/prototype', text).then(function (r2) {
+          var d2 = r2.d || {};
+          if (r2.status === 200 && Array.isArray(d2.columns) && d2.valid !== false) return showTemplate(d2);
+          fail(d.error || d2.error || 'That one did not come out right. Try again, or say a little more about the problem.');
+        });
       })
       .catch(function () { fail('We could not reach the server. Check your connection and try again.'); })
       .then(function () { setBusy(false); });

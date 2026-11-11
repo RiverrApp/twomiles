@@ -350,3 +350,7 @@ tbody tr:hover td { background: color-mix(in oklab, var(--accent) 5%, var(--surf
 .today-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 11px 15px; font-size: 14.5px; }
 .today-list li span { font-weight: 600; }
 .today-list li i { color: var(--fg-faint); font-style: normal; }
+
+/* ---- bespoke prototype frame ---- */
+.proto { display: block; width: 100%; height: 720px; border: 0; background: #fff; }
+@media (max-width: 760px) { .proto { height: 640px; } }
